@@ -1,0 +1,51 @@
+name: Diagnostic Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnostics:
+    name: Diagnóstico de Variáveis e Ambiente
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: ${{ vars.APP_ENV }}
+      API_KEY: ${{ secrets.API_KEY }}
+    steps:
+      - name: Verificar APP_ENV
+        run: |
+          if [ -z "$APP_ENV" ]; then
+            echo "::error::Variável APP_ENV não está definida."
+            echo "APP_ENV ausente" >> var_check.log
+            exit 1
+          else
+            echo "::notice::APP_ENV está definido como: $APP_ENV"
+          fi
+
+      - name: Verificar API_KEY
+        run: |
+          if [ -z "$API_KEY" ]; then
+            echo "::error::Variável secreta API_KEY não está definida."
+            echo "API_KEY ausente" >> var_check.log
+            exit 1
+          else
+            echo "::notice::API_KEY foi fornecida (oculta nos logs)"
+          fi
+
+      - name: Mensagens de diagnóstico
+        run: |
+          echo "::group::Logs detalhados"
+          echo "Execução em ambiente: $APP_ENV"
+          echo "Verificações de variáveis concluídas."
+          echo "::endgroup::"
+
+      - name: Produzir resumo do diagnóstico
+        if: always()
+        run: |
+          echo "## 🩺 Diagnóstico do Pipeline" >> $GITHUB_STEP_SUMMARY
+          echo "- APP_ENV: ${APP_ENV:- Não definido}" >> $GITHUB_STEP_SUMMARY
+          echo "- API_KEY: $([ -n "$API_KEY" ] && echo ' Definida' || echo ' Ausente')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Sugestões de correção" >> $GITHUB_STEP_SUMMARY
+          echo "- Verifique se APP_ENV está configurado em **Settings > Variables**." >> $GITHUB_STEP_SUMMARY
+          echo "- Confirme que API_KEY está presente em **Settings > Secrets**." >> $GITHUB_STEP_SUMMARY
+          echo "- Reexecute o pipeline após corrigir os valores ausentes." >> $GITHUB_STEP_SUMMARY
