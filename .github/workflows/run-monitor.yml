@@ -14,7 +14,7 @@ jobs:
         run: echo "Ambiente de aplicação: $APP_ENV"
 
   use-vars-context:
-    name:  Email via `vars`
+    name: Email via `vars`
     runs-on: ubuntu-latest
     steps:
       - name: Print SUPPORT_EMAIL from vars
@@ -25,4 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Use secret API_KEY
-        run: echo "Usando chave da API: ${{ secrets.API_KEY::0:5 }}*****"
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+        run: echo "Chave da API foi carregada com sucesso (valor oculto)"
