@@ -14,7 +14,8 @@ jobs:
       - name: Print APP_ENV from env
         env:
           APP_ENV: ${{ vars.APP_ENV }}
-        run:  $APP_ENV
+        run: |
+          echo "Ambiente da aplicação: $APP_ENV"
 
   use-vars-context:
     name: SUPPORT_EMAIL via vars
@@ -24,7 +25,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Print SUPPORT_EMAIL from vars
-        run: ${{ vars.SUPPORT_EMAIL }}
+        run: |
+          echo "Email de suporte: ${{ vars.SUPPORT_EMAIL }}"
 
   use-secrets-context:
     name: API_KEY via secrets
@@ -36,4 +38,5 @@ jobs:
       - name: Confirm API_KEY usage
         env:
           API_KEY: ${{ secrets.API_KEY }}
-        run: echo "Chave da API foi carregada com sucesso."
+        run: |
+          echo "Chave da API foi carregada com sucesso."
