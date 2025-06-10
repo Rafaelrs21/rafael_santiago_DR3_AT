@@ -11,48 +11,67 @@ env:
 
 jobs:
   validate:
+    name: Validate Bash Syntax
     runs-on: ubuntu-latest
     steps:
-      - name: Validate script syntax
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Check Bash syntax
         run: |
           if ! bash -n status-check.sh; then
             echo "::error::Erro na sintaxe do script status-check.sh"
             exit 1
           fi
-          echo "::warning::Script syntax validated"
+          echo "::warning::Script verificado com sucesso"
 
   test:
-    needs: validate
+    name: Run Tests
     runs-on: ubuntu-latest
+    needs: validate
     steps:
-      - name: Run tests simulation
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Simulate tests
         run: |
           echo "Running tests"
-          echo "::warning::Simulação de teste executada com sucesso"
+          echo "::warning::Testes simulados com sucesso"
+          exit 0
 
   package:
-    needs: test
+    name: Package Report
     runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      artifact-path: report.zip
     steps:
-      - name: Generate report artifact
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Create zip report
         run: |
-          zip report.zip *.sh || echo "::error::Falha ao criar o artefato report.zip"
+          mkdir report
+          cp status-check.sh report/
+          zip -r report.zip report || echo "::error::Erro ao criar o arquivo report.zip"
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: report
           path: report.zip
 
   summary:
-    needs: package
+    name: Job Summary
     runs-on: ubuntu-latest
+    needs: package
     steps:
-      - name: Create job summary
+      - name: Create Summary
         run: |
-          echo "## Resumo do Pipeline" >> $GITHUB_STEP_SUMMARY
-          echo "- Ambiente: $RUNNER_OS" >> $GITHUB_STEP_SUMMARY
-          echo "- Branch: $GITHUB_REF_NAME" >> $GITHUB_STEP_SUMMARY
-          echo "- Resultado do validate: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Resultado do test: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Resultado do package: ${{ needs.package.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Artefato: [report.zip](${{ steps.upload-artifact.outputs.artifact_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "##  Resumo do Pipeline" >> $GITHUB_STEP_SUMMARY
+          echo "- Ambiente do runner: $RUNNER_OS" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch executada: $GITHUB_REF_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "- Status do job 'validate': ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status do job 'test': ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status do job 'package': ${{ needs.package.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Artefato gerado: report.zip (ver aba Artifacts)" >> $GITHUB_STEP_SUMMARY
