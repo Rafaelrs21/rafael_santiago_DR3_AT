@@ -6,46 +6,53 @@ on:
       - main
   pull_request:
 
+env:
+  ACTIONS_STEP_DEBUG: true
+
 jobs:
   validate:
-    name: Validate Bash Syntax
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Check Bash syntax
-        run: bash -n status-check.sh
+      - name: Validate script syntax
+        run: |
+          if ! bash -n status-check.sh; then
+            echo "::error::Erro na sintaxe do script status-check.sh"
+            exit 1
+          fi
+          echo "::warning::Script syntax validated"
 
   test:
-    name: Run Tests
-    runs-on: ubuntu-latest
     needs: validate
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Simulate tests
+      - name: Run tests simulation
         run: |
           echo "Running tests"
-          exit 0
+          echo "::warning::Simulação de teste executada com sucesso"
 
   package:
-    name: Package Report
-    runs-on: ubuntu-latest
     needs: test
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Create zip report
+      - name: Generate report artifact
         run: |
-          mkdir report
-          cp status-check.sh report/
-          zip -r report.zip report
-
+          zip report.zip *.sh || echo "::error::Falha ao criar o artefato report.zip"
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: report
           path: report.zip
+
+  summary:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create job summary
+        run: |
+          echo "## Resumo do Pipeline" >> $GITHUB_STEP_SUMMARY
+          echo "- Ambiente: $RUNNER_OS" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: $GITHUB_REF_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "- Resultado do validate: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Resultado do test: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Resultado do package: ${{ needs.package.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Artefato: [report.zip](${{ steps.upload-artifact.outputs.artifact_url }})" >> $GITHUB_STEP_SUMMARY
