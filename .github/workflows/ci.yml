@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    name: 🔍 Validate Bash Syntax
+    name: Validate Bash Syntax
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -18,7 +18,7 @@ jobs:
         run: bash -n status-check.sh
 
   test:
-    name: ✅ Run Tests
+    name: Run Tests
     runs-on: ubuntu-latest
     needs: validate
     steps:
@@ -31,7 +31,7 @@ jobs:
           exit 0
 
   package:
-    name: 📦 Package Report
+    name: Package Report
     runs-on: ubuntu-latest
     needs: test
     steps:
