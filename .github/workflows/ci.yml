@@ -6,6 +6,9 @@ on:
       - main
   pull_request:
 
+env:
+  ACTIONS_STEP_DEBUG: true
+
 jobs:
   validate:
     name: Validate Bash Syntax
@@ -15,7 +18,12 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Check Bash syntax
-        run: bash -n status-check.sh
+        run: |
+          if ! bash -n status-check.sh; then
+            echo "::error::Erro na sintaxe do script status-check.sh"
+            exit 1
+          fi
+          echo "::warning::Script verificado com sucesso"
 
   test:
     name: Run Tests
@@ -28,12 +36,15 @@ jobs:
       - name: Simulate tests
         run: |
           echo "Running tests"
+          echo "::warning::Testes simulados com sucesso"
           exit 0
 
   package:
     name: Package Report
     runs-on: ubuntu-latest
     needs: test
+    outputs:
+      artifact-path: report.zip
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -42,10 +53,25 @@ jobs:
         run: |
           mkdir report
           cp status-check.sh report/
-          zip -r report.zip report
+          zip -r report.zip report || echo "::error::Erro ao criar o arquivo report.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: report
           path: report.zip
+
+  summary:
+    name: Job Summary
+    runs-on: ubuntu-latest
+    needs: package
+    steps:
+      - name: Create Summary
+        run: |
+          echo "##  Resumo do Pipeline" >> $GITHUB_STEP_SUMMARY
+          echo "- Ambiente do runner: $RUNNER_OS" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch executada: $GITHUB_REF_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "- Status do job 'validate': ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status do job 'test': ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status do job 'package': ${{ needs.package.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Artefato gerado: report.zip (ver aba Artifacts)" >> $GITHUB_STEP_SUMMARY
