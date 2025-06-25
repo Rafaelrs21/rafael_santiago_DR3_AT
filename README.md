@@ -65,7 +65,7 @@ Os principais são: env
 
     São variáveis definidas no bloco env: e passadas para o shell durante a execução do workflow.
 
-    Podem ser acessadas diretamente dentro dos scripts como $VARIAVEL (Linux/macOS) ou %VARIAVEL% (Windows).
+    Podem ser acessadas diretamente dentro dos scripts como $VARIAVEL Linux/macOS ou %VARIAVEL% Windows.
 
     Permitem configurar valores que serão usados ao longo do job ou step.
 
