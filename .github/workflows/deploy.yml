@@ -6,15 +6,27 @@ on:
       - main
 
 jobs:
+  approval:
+    name: Esperar aprovação manual
+    runs-on: ubuntu-latest
+    steps:
+      - name: Esperar input
+        run: |
+          echo "Simulando espera por aprovação..."
+          sleep 30  # Espera de 30 segundos simulando "pausa"
+      - name: Ver repositório autenticado com GITHUB_TOKEN
+        run: |
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"
+
   deploy:
     name: Deploy to Production
+    needs: approval
     runs-on: ubuntu-latest
-    environment:
-      name: production
+    env:
+      PROD_DOMAIN: appmonitor.com
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Simulate deploy
-        run: |
-          echo "Deploying to $PROD_DOMAIN"
+        run: echo "Deploying to $PROD_DOMAIN"
