@@ -5,47 +5,45 @@ on:
 
 jobs:
   diagnostics:
-    name: Diagnóstico de Variáveis e Ambiente
+    name: Verificar variáveis obrigatórias
     runs-on: ubuntu-latest
     env:
       APP_ENV: ${{ vars.APP_ENV }}
       API_KEY: ${{ secrets.API_KEY }}
     steps:
-      - name: Verificar APP_ENV
+      - name: Verificar variáveis
         run: |
+          echo "Iniciando verificação de variáveis..."
+          
           if [ -z "$APP_ENV" ]; then
-            echo "::error::Variável APP_ENV não está definida."
-            echo "APP_ENV ausente" >> var_check.log
-            exit 1
+            echo "::error::APP_ENV não está definida."
+            APP_ENV_STATUS=" Ausente"
+            FAIL=true
           else
-            echo "::notice::APP_ENV está definido como: $APP_ENV"
+            echo "::notice::APP_ENV = $APP_ENV"
+            APP_ENV_STATUS=" $APP_ENV"
           fi
-
-      - name: Verificar API_KEY
-        run: |
+          
           if [ -z "$API_KEY" ]; then
-            echo "::error::Variável secreta API_KEY não está definida."
-            echo "API_KEY ausente" >> var_check.log
-            exit 1
+            echo "::error::API_KEY não está definida."
+            API_KEY_STATUS=" Ausente"
+            FAIL=true
           else
-            echo "::notice::API_KEY foi fornecida (oculta nos logs)"
+            echo "::notice::API_KEY está definida (oculta nos logs)"
+            API_KEY_STATUS=" Definida"
           fi
-
-      - name: Mensagens de diagnóstico
-        run: |
-          echo "::group::Logs detalhados"
-          echo "Execução em ambiente: $APP_ENV"
-          echo "Verificações de variáveis concluídas."
-          echo "::endgroup::"
-
-      - name: Produzir resumo do diagnóstico
-        if: always()
-        run: |
+          
+          # Resumo
           echo "## 🩺 Diagnóstico do Pipeline" >> $GITHUB_STEP_SUMMARY
-          echo "- APP_ENV: ${APP_ENV:- Não definido}" >> $GITHUB_STEP_SUMMARY
-          echo "- API_KEY: $([ -n "$API_KEY" ] && echo ' Definida' || echo ' Ausente')" >> $GITHUB_STEP_SUMMARY
+          echo "- APP_ENV: $APP_ENV_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "- API_KEY: $API_KEY_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Sugestões de correção" >> $GITHUB_STEP_SUMMARY
-          echo "- Verifique se APP_ENV está configurado em **Settings > Variables**." >> $GITHUB_STEP_SUMMARY
-          echo "- Confirme que API_KEY está presente em **Settings > Secrets**." >> $GITHUB_STEP_SUMMARY
-          echo "- Reexecute o pipeline após corrigir os valores ausentes." >> $GITHUB_STEP_SUMMARY
+          echo "### Sugestões" >> $GITHUB_STEP_SUMMARY
+          echo "- Defina APP_ENV em **Settings > Variables** se estiver ausente." >> $GITHUB_STEP_SUMMARY
+          echo "- Defina API_KEY em **Settings > Secrets** se necessário." >> $GITHUB_STEP_SUMMARY
+          echo "- Reexecute este workflow após corrigir os problemas." >> $GITHUB_STEP_SUMMARY
+
+          # Falhar se necessário
+          if [ "$FAIL" = true ]; then
+            exit 1
+          fi
